@@ -1,7 +1,7 @@
 /** constants */
 const MAP_LENGTH = 650;
 const INITIAL_RADIUS = 20;
-const MAX_PLAYER_SIZE = 500;
+const MAX_PLAYER_SIZE = 300;
 const FOOD_SIZE = 8;
 const EDIBLE_RANGE_RATIO = 0.9;
 const EDIBLE_SIZE_RATIO = 0.9;
@@ -37,7 +37,10 @@ const playerAttemptEatPlayer = (pid1, pid2) => {
   const dist = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
   if (dist < gameState.players[pid1].radius * EDIBLE_RANGE_RATIO) {
     // player 2 is within player 1's eat range
-    if (gameState.players[pid1].radius * EDIBLE_SIZE_RATIO > gameState.players[pid2].radius) {
+    if (
+      gameState.players[pid1].radius * EDIBLE_SIZE_RATIO >
+      gameState.players[pid2].radius
+    ) {
       // player 1 is big enough to eat player 2
       gameState.players[pid1].radius += gameState.players[pid2].radius;
       playersEaten.push(pid2);
