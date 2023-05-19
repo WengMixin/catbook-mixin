@@ -1,9 +1,9 @@
 /*
  * @Author: mixin weng mixin_weng2022@163.com
- * @Date: 2023-05-09 20:05:47
+ * @Date: 2023-05-14 19:50:03
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-10 01:29:25
- * @FilePath: /catbook-mixin/server/auth.js
+ * @LastEditTime: 2023-05-19 18:56:18
+ * @FilePath: /catbook-react/server/auth.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 const { OAuth2Client } = require("google-auth-library");
@@ -12,7 +12,7 @@ const socketManager = require("./server-socket");
 
 // create a new OAuth client used to verify google sign-in
 const CLIENT_ID =
-  "395785444978-7b9v7l0ap2h3308528vu1ddnt3rqftjc.apps.googleusercontent.com";
+  "1077451764878-bb0pg5vusui84qbsbl1f7gnc5es3carr.apps.googleusercontent.com";
 const client = new OAuth2Client(CLIENT_ID);
 
 // accepts a login token from the frontend, and verifies that it's legit

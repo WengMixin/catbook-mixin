@@ -1,20 +1,16 @@
 /*
  * @Author: mixin weng mixin_weng2022@163.com
- * @Date: 2023-05-09 20:05:45
+ * @Date: 2023-05-18 17:29:21
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-10 01:29:28
- * @FilePath: /catbook-mixin/client/src/components/modules/NavBar.js
+ * @LastEditTime: 2023-05-19 14:44:54
+ * @FilePath: /catbook-react/client/src/components/modules/NavBar.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "@reach/router";
-import GoogleLogin, { GoogleLogout } from "react-google-login";
-
 import "./NavBar.css";
-
-// This identifies your web application to Google's authentication service
-const GOOGLE_CLIENT_ID =
-  "395785444978-7b9v7l0ap2h3308528vu1ddnt3rqftjc.apps.googleusercontent.com";
+import "../../utilities.css";
+import { GoogleLogin } from "@react-oauth/google";
 
 /**
  * The navigation bar at the top of all pages. Takes no props.
@@ -42,21 +38,23 @@ const NavBar = (props) => {
           Game
         </Link>
         {props.userId ? (
-          <GoogleLogout
-            clientId={GOOGLE_CLIENT_ID}
-            buttonText="Logout"
-            onLogoutSuccess={props.handleLogout}
-            onFailure={(err) => console.log(err)}
-            className="NavBar-link NavBar-login"
-          />
+          <button onClick={props.handleLogout} className="NavBar-logout">
+            Sign out
+          </button>
         ) : (
-          <GoogleLogin
-            clientId={GOOGLE_CLIENT_ID}
-            buttonText="Login"
-            onSuccess={props.handleLogin}
-            onFailure={(err) => console.log(err)}
-            className="NavBar-link NavBar-login"
-          />
+          <div className="NavBar-link NavBar-loginx u-inlineBlock">
+            <GoogleLogin
+              onSuccess={props.handleLogin}
+              onError={() => {
+                console.log("Login Failed");
+              }}
+              text="signin"
+              type="standard"
+              theme="outline"
+              size="medium"
+              shape="rectangular"
+            />
+          </div>
         )}
       </div>
     </nav>

@@ -1,8 +1,8 @@
 /** constants */
-const MAP_LENGTH = 500;
+const MAP_LENGTH = 650;
 const INITIAL_RADIUS = 20;
-const MAX_PLAYER_SIZE = 200;
-const FOOD_SIZE = 2;
+const MAX_PLAYER_SIZE = 500;
+const FOOD_SIZE = 8;
 const EDIBLE_RANGE_RATIO = 0.9;
 const EDIBLE_SIZE_RATIO = 0.9;
 const colors = ["red", "blue", "green", "yellow", "purple", "orange", "silver"]; // colors to use for players
@@ -74,7 +74,7 @@ const playerAttemptEatFood = (pid1, f) => {
     // food is within player 1's eat range
     if (gameState.players[pid1].radius > FOOD_SIZE) {
       // player 1 is big enough to eat food
-      gameState.players[pid1].radius += FOOD_SIZE;
+      gameState.players[pid1].radius += FOOD_SIZE / 3;
       removeFood(f);
     }
   }
@@ -104,6 +104,7 @@ const spawnPlayer = (id) => {
     position: getRandomPosition(),
     radius: INITIAL_RADIUS,
     color: colors[Math.floor(Math.random() * colors.length)],
+    direction: { magnitude: 0, direction: 0 },
   };
 };
 
@@ -117,39 +118,27 @@ const spawnFood = () => {
 };
 
 /** Moves a player based off the sent data from the "move" socket msg */
-const movePlayer = (id, dir) => {
-  // Unbounded moves
-  // if (dir === "up") {
-  //   gameState.players[id].position.y += 10;
-  // } else if (dir === "down") {
-  //   gameState.players[id].position.y -= 10;
-  // } else if (dir === "left") {
-  //   gameState.players[id].position.x -= 10;
-  // } else if (dir === "right") {
-  //   gameState.players[id].position.x += 10;
-  // }
-
+const movePlayer = (id) => {
+  const player = gameState.players[id];
   // If player doesn't exist, don't move anything
-  if (gameState.players[id] == undefined) {
+  if (player == undefined) {
     return;
   }
 
   // Initialize a desired position to move to
   const desiredPosition = {
-    x: gameState.players[id].position.x,
-    y: gameState.players[id].position.y,
+    x: player.position.x,
+    y: player.position.y,
   };
+  // Use player.direction instead of 'dir'
+  const dir = player.direction.direction;
+  const magnitude = player.direction.magnitude;
 
-  // Calculate desired position
-  if (dir === "up") {
-    desiredPosition.y += 10;
-  } else if (dir === "down") {
-    desiredPosition.y -= 10;
-  } else if (dir === "left") {
-    desiredPosition.x -= 10;
-  } else if (dir === "right") {
-    desiredPosition.x += 10;
-  }
+  // Calculate the change in position based on the magnitude and direction
+  const dx = magnitude * Math.cos(dir);
+  const dy = magnitude * Math.sin(dir);
+  desiredPosition.x += dx / 50;
+  desiredPosition.y -= dy / 50;
 
   // Keep player in bounds
   if (desiredPosition.x > MAP_LENGTH) {
@@ -171,7 +160,7 @@ const movePlayer = (id, dir) => {
 
 /** Spawn a food if there are less than 10 foods */
 const checkEnoughFoods = () => {
-  if (gameState.food.length < 10) {
+  if (gameState.food.length < 15) {
     spawnFood();
   }
 };
@@ -198,6 +187,7 @@ const checkWin = () => {
 
 /** Update the game state. This function is called once per server tick. */
 const updateGameState = () => {
+  Object.keys(gameState.players).forEach(movePlayer);
   checkWin();
   computePlayersEatPlayers();
   computePlayersEatFoods();

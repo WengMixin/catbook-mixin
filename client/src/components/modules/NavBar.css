@@ -1,6 +1,7 @@
 .NavBar-container {
   padding: var(--s) var(--m);
   background-color: var(--primary);
+  /* height: 40px; */
 }
 
 .NavBar-title {
@@ -31,7 +32,21 @@
 .NavBar-link.NavBar-login {
   opacity: 1;
 }
+.NavBar-logout {
+  padding: 0px;
+  margin-right: 0;
+  margin-bottom: 0;
+  opacity: 1;
+  margin-left: var(--m);
+}
+.NavBar-loginx {
+  border: none;
+  opacity: 1;
+}
 
 .NavBar-link + .NavBar-link {
   margin-left: var(--m);
+}
+.hidden {
+  display: none;
 }

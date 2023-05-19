@@ -78,7 +78,12 @@ module.exports = {
       socket.on("move", (dir) => {
         // Listen for moves from client and move player accordingly
         const user = getUserFromSocketID(socket.id);
-        if (user) gameLogic.movePlayer(user._id, dir);
+        if (user) {
+          const player = gameLogic.gameState.players[user._id];
+          if (player) {
+            player.direction = dir; // Update player's direction
+          }
+        }
       });
     });
   },

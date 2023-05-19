@@ -12,9 +12,10 @@
 | - Sets up error handling in case something goes wrong when handling a request
 | - Actually starts the webserver
 */
-require("dotenv").config();
+
 // validator runs some basic checks to make sure you've set everything up correctly
 // this is a tool provided by staff, so you don't need to worry about it
+require("dotenv").config();
 const validator = require("./validator");
 validator.checkSetup();
 
@@ -97,7 +98,7 @@ app.use((err, req, res, next) => {
 });
 
 // hardcode port to 3000 for now
-const port = process.env.PORT || 3000;
+const port = 3000;
 const server = http.Server(app);
 socketManager.init(server);
 
