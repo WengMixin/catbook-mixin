@@ -2,7 +2,7 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-18 13:05:04
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-22 12:51:47
+ * @LastEditTime: 2023-05-22 21:15:09
  * @FilePath: /catbook-react/client/src/components/App.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -75,7 +75,10 @@ const App = () => {
                         <Chatbook path="/chat/" userId={userId} />
                         <Game path="/game/" userId={userId} />
                         <Lobby path="/lobby/" userId={userId} />
-                        <PeerChat path="/chatroom/:inviteLink" />
+                        <PeerChat
+                            path="/chatroom/:inviteLink"
+                            userId={userId}
+                        />
                         <NotFound default />
                     </Router>
                 </div>
