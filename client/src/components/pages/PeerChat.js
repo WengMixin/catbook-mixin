@@ -2,7 +2,7 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-23 17:11:41
+ * @LastEditTime: 2023-05-23 19:50:17
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -46,6 +46,7 @@ function PeerChat(props) {
     const [micButtonColor, setMicButtonColor] = useState(
         "rgb(179, 102, 249, .9)"
     );
+
     //初始化useRef来获取浏览器中的视频和音频权限。
     let videoRef1 = useRef(null);
     let videoRef2 = useRef(null);
@@ -79,8 +80,7 @@ function PeerChat(props) {
             init();
         }
         return () => {
-            // 这里可以放一些清理代码
-            // leaveChannel();
+            leaveChannel();
         };
     }, []); // 只在组件挂载时执行
 
@@ -107,12 +107,11 @@ function PeerChat(props) {
         message = JSON.parse(message.text);
         console.log("Message:", message);
 
-        // if (message.type === "full") {
-        //     await channel.leave();
-        //     await client.logout();
-        //     navigate("/lobby");
-        //     alert("Room is full");
-        // }
+        if (message.type === "full") {
+            alert("Room is full");
+            LeftThePage();
+        }
+
         if (message.type === "offer") {
             createAnswer(MemberID, message.offer);
         }
@@ -131,21 +130,25 @@ function PeerChat(props) {
     let handleUserJoined = async (MemberID) => {
         console.log("A new user is joined:", MemberID);
 
-        // channel.getMembers().then(async (memberList) => {
-        //     if (memberList.length > 2) {
-        //         client.sendMessageToPeer(
-        //             {
-        //                 text: JSON.stringify({
-        //                     type: "full",
-        //                 }),
-        //             },
-        //             MemberID
-        //         );
-        //         thirdMemberID = MemberID;
-        //         return;
-        //     }
-        createOffer(MemberID);
-        // });
+        setCameraButtonColor("rgb(179, 102, 249, .9)");
+        setMicButtonColor("rgb(179, 102, 249, .9)");
+
+        //判断是否超过两个人在一个房间
+        channel.getMembers().then(async (memberList) => {
+            if (memberList.length > 2) {
+                client.sendMessageToPeer(
+                    {
+                        text: JSON.stringify({
+                            type: "full",
+                        }),
+                    },
+                    MemberID
+                );
+                thirdMemberID = MemberID;
+                return;
+            }
+            createOffer(MemberID);
+        });
     };
 
     let createPeerConnection = async (MemberID) => {
@@ -235,13 +238,10 @@ function PeerChat(props) {
             setUser2Visible(false);
             setUser1SmallFrame(false);
         }
-        // clear the stored thirdMemberID
         thirdMemberID = null;
     };
 
     let leaveChannel = async () => {
-        //...
-        // navigate("/lobby");
         await channel.leave();
         await client.logout();
     };
@@ -272,6 +272,26 @@ function PeerChat(props) {
             audioTrack.enabled = true;
             setMicButtonColor("rgb(179, 102, 249, .9)");
         }
+    };
+
+    let LeftThePage = () => {
+        //退出关闭视频和音频
+        if (localStreamState) {
+            let videoTrack = localStreamState
+                .getTracks()
+                .find((track) => track.kind === "video");
+            if (videoTrack) {
+                videoTrack.enabled = false;
+            }
+            let audioTrack = localStreamState
+                .getTracks()
+                .find((track) => track.kind === "audio");
+            if (audioTrack.enabled) {
+                audioTrack.enabled = false;
+            }
+        }
+        //
+        navigate("/lobby");
     };
 
     window.addEventListener("beforeunload", leaveChannel);
@@ -324,8 +344,9 @@ function PeerChat(props) {
 
                 <div
                     className={"controlContainer"}
+                    style={{ backgroundColor: "rgb(255,80,80)" }}
                     id="leave-btn"
-                    onClick={leaveChannel}
+                    onClick={LeftThePage}
                 >
                     <img
                         className={"controlContainerImg"}
