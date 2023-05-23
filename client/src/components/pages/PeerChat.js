@@ -2,7 +2,7 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-23 12:53:19
+ * @LastEditTime: 2023-05-23 14:37:25
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -19,6 +19,8 @@ import { useParams } from "@reach/router";
 function PeerChat(props) {
     const [APP_ID] = useState("582c5744b00d4e7dae15d86ca5734353");
     const [token, setToken] = useState(null);
+    // const [localStream, setLocalStream] = useState(null);
+
     // const searchParams = new URLSearchParams(window.location.search);
     // const uid = searchParams.get("userId");
     const uid = String(Math.floor(Math.random() * 10000));
@@ -67,70 +69,6 @@ function PeerChat(props) {
         ],
     };
 
-    let init = async () => {
-        client = await AgoraRTM.createInstance(APP_ID);
-        await client.login({ uid, token });
-        channel = client.createChannel(roomId);
-        await channel.join();
-
-        // 加入和离开
-        channel.on("MemberJoined", handleUserJoined);
-        // channel.on("MemberLeft", handleUserLeft);
-
-        // // 对应的是，createOffer或者createAnswer函数里面的 client.sendMessageToPeer
-        // // 所以他有两个message类型：offer 和 answer
-        // client.on("MessageFromPeer", handleMessageFromPeer);
-
-        localStream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (videoRef1.current) {
-            videoRef1.current.srcObject = localStream;
-        }
-        createOffer();
-    };
-    //
-    let handleUserJoined = async (MemberID) => {
-        console.log("A new user is joined:", MemberID);
-        // channel.getMembers().then(async (memberList) => {
-        //     if (memberList.length > 2) {
-        //         client.sendMessageToPeer(
-        //             {
-        //                 text: JSON.stringify({
-        //                     type: "full",
-        //                 }),
-        //             },
-        //             MemberID
-        //         );
-        //         thirdMemberID = MemberID;
-        //         return;
-        //     }
-        //     createOffer(MemberID);
-        // });
-    };
-    // let handleMessageFromPeer = async (message, MemberID) => {
-    //     message = JSON.parse(message.text);
-    //     // console.log("Message:", message);
-
-    //     if (message.type === "full") {
-    //         await channel.leave();
-    //         await client.logout();
-    //         navigate("/lobby");
-    //         alert("Room is full");
-    //     }
-    //     if (message.type === "offer") {
-    //         createAnswer(MemberID, message.offer);
-    //     }
-
-    //     if (message.type === "answer") {
-    //         addAnswer(message.answer);
-    //     }
-
-    //     if (message.type === "candidate") {
-    //         if (peerConnection) {
-    //             peerConnection.addIceCandidate(message.candidate);
-    //         }
-    //     }
-    // };
-
     // let createPeerConnection = async (MemberID) => {
     //     peerConnection = new RTCPeerConnection(servers);
 
@@ -178,49 +116,6 @@ function PeerChat(props) {
     //         }
     //     };
     // };
-
-    let createOffer = async (MemberID) => {
-        peerConnection = new RTCPeerConnection(); //使用RTCPeerConnection()库。
-
-        remoteStream = new MediaStream(); //MediaStream也是库
-        document.getElementById("user-2").srcObject = remoteStream; //把远程绑定到user-2窗口。
-
-        localStream.getTracks().forEach((track) => {
-            peerConnection.addTrack(track, localStream);
-        });
-
-        // 接受远程的track
-        peerConnection.ontrack = (event) => {
-            event.streams[0].getTracks().forEach((track) => {
-                remoteStream.addTrack(track);
-            });
-        };
-        // 监听远程的track
-        peerConnection.onicecandidate = async (event) => {
-            if (event.candidate) {
-                console.log("New ice candidate:", event.candidate);
-            }
-        };
-
-        let offer = await peerConnection.createOffer(); //创建一个offer规则，目前为空。
-        await peerConnection.setLocalDescription(offer); // 这个会触发上面的onicecandidate。
-
-        console.log("offer:", offer);
-
-        // try {
-        //     await createPeerConnection(MemberID);
-
-        //     let offer = await peerConnection.createOffer();
-        //     await peerConnection.setLocalDescription(offer);
-
-        //     client.sendMessageToPeer(
-        //         { text: JSON.stringify({ type: "offer", offer: offer }) },
-        //         MemberID
-        //     );
-        // } catch (error) {
-        //     console.error("Failed to create offer:", error);
-        // }
-    };
 
     // let createAnswer = async (MemberID, offer) => {
     //     await createPeerConnection(MemberID);
@@ -286,14 +181,134 @@ function PeerChat(props) {
         } else {
             init();
         }
-
-        // 我们需要在组件卸载时进行清理，因此在这里返回一个清理函数
         return () => {
             // 这里可以放一些清理代码
             // leaveChannel();
         };
-    }, [roomId, uid]); // 只在组件挂载时执行
+    }, []); // 只在组件挂载时执行
 
+    let init = async () => {
+        client = await AgoraRTM.createInstance(APP_ID);
+        await client.login({ uid, token });
+        channel = client.createChannel(roomId);
+        await channel.join();
+        // 加入和离开
+        channel.on("MemberJoined", handleUserJoined);
+        // channel.on("MemberLeft", handleUserLeft);
+        client.on("MessageFromPeer", handleMessageFromPeer);
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        localStream = stream;
+        if (videoRef1.current) {
+            videoRef1.current.srcObject = stream;
+        }
+    };
+
+    let handleUserJoined = async (MemberID) => {
+        console.log("A new user is joined:", MemberID);
+
+        // channel.getMembers().then(async (memberList) => {
+        //     if (memberList.length > 2) {
+        //         client.sendMessageToPeer(
+        //             {
+        //                 text: JSON.stringify({
+        //                     type: "full",
+        //                 }),
+        //             },
+        //             MemberID
+        //         );
+        //         thirdMemberID = MemberID;
+        //         return;
+        //     }
+        createOffer(MemberID);
+        // });
+    };
+
+    let createOffer = async (MemberID) => {
+        peerConnection = new RTCPeerConnection(); //使用RTCPeerConnection()库。
+
+        remoteStream = new MediaStream(); //MediaStream也是库
+        if (videoRef2.current) {
+            videoRef2.current.srcObject = remoteStream;
+        }
+
+        setUser2Visible(true);
+        setUser1SmallFrame(true);
+
+        // 如何localStream还没有设置，则再次设置。防止为空。
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        localStream = stream;
+        if (videoRef1.current) {
+            videoRef1.current.srcObject = stream;
+        }
+
+        localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        // 接受远程的track
+        peerConnection.ontrack = (event) => {
+            event.streams[0].getTracks().forEach((track) => {
+                remoteStream.addTrack(track);
+            });
+        };
+        // 监听远程的track
+        peerConnection.onicecandidate = async (event) => {
+            if (event.candidate) {
+                client.sendMessageToPeer(
+                    {
+                        text: JSON.stringify({
+                            type: "candidate",
+                            candidate: event.candidate,
+                        }),
+                    },
+                    MemberID
+                );
+            }
+        };
+
+        let offer = await peerConnection.createOffer(); //创建一个offer规则，目前为空。
+        await peerConnection.setLocalDescription(offer); // 这个会触发上面的onicecandidate。
+
+        try {
+            //     await createPeerConnection(MemberID);
+
+            //     let offer = await peerConnection.createOffer();
+            //     await peerConnection.setLocalDescription(offer);
+
+            client.sendMessageToPeer(
+                { text: JSON.stringify({ type: "offer", offer: offer }) },
+                MemberID
+            );
+        } catch (error) {
+            //     console.error("Failed to create offer:", error);
+        }
+    };
+
+    const handleMessageFromPeer = async (message, MemberID) => {
+        message = JSON.parse(message.text);
+        console.log("Message:", message);
+
+        // if (message.type === "full") {
+        //     await channel.leave();
+        //     await client.logout();
+        //     navigate("/lobby");
+        //     alert("Room is full");
+        // }
+        // if (message.type === "offer") {
+        //     createAnswer(MemberID, message.offer);
+        // }
+
+        // if (message.type === "answer") {
+        //     addAnswer(message.answer);
+        // }
+
+        // if (message.type === "candidate") {
+        //     if (peerConnection) {
+        //         peerConnection.addIceCandidate(message.candidate);
+        //     }
+        // }
+    };
     // 返回组件的JSX
     return (
         <div>
