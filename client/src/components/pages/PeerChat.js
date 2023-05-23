@@ -2,12 +2,12 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-23 19:50:17
+ * @LastEditTime: 2023-05-24 00:28:54
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import "./PeerChat.css";
 import { navigate } from "@reach/router";
 // Remember to import images and adjust these paths to the correct ones in your project
@@ -21,9 +21,9 @@ function PeerChat(props) {
     const [token, setToken] = useState(null);
     const [localStreamState, setLocalStreamState] = useState(null);
 
-    // const searchParams = new URLSearchParams(window.location.search);
-    // const uid = searchParams.get("userId");
-    const uid = String(Math.floor(Math.random() * 10000));
+    const searchParams = new URLSearchParams(window.location.search);
+    const uid = searchParams.get("userId");
+    // const uid = String(Math.floor(Math.random() * 10000));
 
     let client;
     let channel;
@@ -72,24 +72,80 @@ function PeerChat(props) {
         ],
     };
 
-    useEffect(() => {
-        //  || uid !== props.userId
-        if (!roomId) {
-            navigate("/lobby");
-        } else {
-            init();
-        }
-        return () => {
-            leaveChannel();
-        };
-    }, []); // 只在组件挂载时执行
+    // test//
+    const handleUserJoined = useCallback(
+        async (MemberID) => {
+            console.log("A new user is joined:", MemberID);
 
-    let init = async () => {
+            setCameraButtonColor("rgb(179, 102, 249, .9)");
+            setMicButtonColor("rgb(179, 102, 249, .9)");
+
+            //判断是否超过两个人在一个房间
+            channel.getMembers().then(async (memberList) => {
+                if (memberList.length > 2) {
+                    client.sendMessageToPeer(
+                        {
+                            text: JSON.stringify({
+                                type: "full",
+                            }),
+                        },
+                        MemberID
+                    );
+                    thirdMemberID = MemberID;
+                    return;
+                }
+                createOffer(MemberID);
+            });
+        },
+        [setCameraButtonColor, setMicButtonColor]
+    );
+
+    const handleUserLeft = useCallback(
+        (MemberID) => {
+            //only update the UI if the member who left was not the third member
+            if (MemberID !== thirdMemberID) {
+                setUser2Visible(false);
+                setUser1SmallFrame(false);
+            }
+            thirdMemberID = null;
+        },
+
+        [setUser2Visible, setUser1SmallFrame]
+    );
+
+    const handleMessageFromPeer = useCallback(
+        async (message, MemberID) => {
+            message = JSON.parse(message.text);
+            console.log("Message:", message);
+
+            if (message.type === "full") {
+                alert("Room is full");
+                LeftThePage();
+            }
+
+            if (message.type === "offer") {
+                createAnswer(MemberID, message.offer);
+            }
+
+            if (message.type === "answer") {
+                addAnswer(message.answer);
+            }
+
+            if (message.type === "candidate") {
+                if (peerConnection) {
+                    peerConnection.addIceCandidate(message.candidate);
+                }
+            }
+        },
+        [addAnswer, createAnswer]
+    );
+
+    const init = useCallback(async () => {
         client = await AgoraRTM.createInstance(APP_ID);
         await client.login({ uid, token });
         channel = client.createChannel(roomId);
         await channel.join();
-        // 加入和离开
+
         channel.on("MemberJoined", handleUserJoined);
         channel.on("MemberLeft", handleUserLeft);
 
@@ -101,55 +157,116 @@ function PeerChat(props) {
         if (videoRef1.current) {
             videoRef1.current.srcObject = stream;
         }
-    };
 
-    const handleMessageFromPeer = async (message, MemberID) => {
-        message = JSON.parse(message.text);
-        console.log("Message:", message);
+        return () => {
+            // returning cleanup function
+            channel.off("MemberJoined", handleUserJoined);
+            channel.off("MemberLeft", handleUserLeft);
+            client.off("MessageFromPeer", handleMessageFromPeer);
+        };
+    }, [handleUserJoined, handleUserLeft, handleMessageFromPeer]);
 
-        if (message.type === "full") {
-            alert("Room is full");
-            LeftThePage();
+    useEffect(() => {
+        //  || uid !== props.userId
+        if (!roomId || uid !== props.userId) {
+            navigate("/lobby");
+        } else {
+            init();
         }
 
-        if (message.type === "offer") {
-            createAnswer(MemberID, message.offer);
-        }
+        return () => {
+            window.removeEventListener("beforeunload", leaveChannel);
+            leaveChannel();
+        };
+    }, [init]);
 
-        if (message.type === "answer") {
-            addAnswer(message.answer);
-        }
+    //*test*//
 
-        if (message.type === "candidate") {
-            if (peerConnection) {
-                peerConnection.addIceCandidate(message.candidate);
-            }
-        }
-    };
+    // useEffect(() => {
+    //     //  || uid !== props.userId
+    //     if (!roomId) {
+    //         navigate("/lobby");
+    //     } else {
+    //         init();
+    //     }
+    //     return () => {
+    //         window.removeEventListener("beforeunload", leaveChannel);
+    //         leaveChannel();
+    //     };
+    // }, []); // 只在组件挂载时执行
 
-    let handleUserJoined = async (MemberID) => {
-        console.log("A new user is joined:", MemberID);
+    // let init = async () => {
+    //     client = await AgoraRTM.createInstance(APP_ID);
+    //     await client.login({ uid, token });
+    //     channel = client.createChannel(roomId);
+    //     await channel.join();
+    //     // 加入和离开
+    //     channel.on("MemberJoined", handleUserJoined);
+    //     channel.on("MemberLeft", handleUserLeft);
 
-        setCameraButtonColor("rgb(179, 102, 249, .9)");
-        setMicButtonColor("rgb(179, 102, 249, .9)");
+    //     client.on("MessageFromPeer", handleMessageFromPeer);
 
-        //判断是否超过两个人在一个房间
-        channel.getMembers().then(async (memberList) => {
-            if (memberList.length > 2) {
-                client.sendMessageToPeer(
-                    {
-                        text: JSON.stringify({
-                            type: "full",
-                        }),
-                    },
-                    MemberID
-                );
-                thirdMemberID = MemberID;
-                return;
-            }
-            createOffer(MemberID);
-        });
-    };
+    //     const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    //     localStream = stream;
+    //     setLocalStreamState(stream);
+    //     if (videoRef1.current) {
+    //         videoRef1.current.srcObject = stream;
+    //     }
+    // };
+    // const handleMessageFromPeer = async (message, MemberID) => {
+    //     message = JSON.parse(message.text);
+    //     console.log("Message:", message);
+
+    //     if (message.type === "full") {
+    //         alert("Room is full");
+    //         LeftThePage();
+    //     }
+
+    //     if (message.type === "offer") {
+    //         createAnswer(MemberID, message.offer);
+    //     }
+
+    //     if (message.type === "answer") {
+    //         addAnswer(message.answer);
+    //     }
+
+    //     if (message.type === "candidate") {
+    //         if (peerConnection) {
+    //             peerConnection.addIceCandidate(message.candidate);
+    //         }
+    //     }
+    // };
+    // let handleUserJoined = async (MemberID) => {
+    //     console.log("A new user is joined:", MemberID);
+
+    //     setCameraButtonColor("rgb(179, 102, 249, .9)");
+    //     setMicButtonColor("rgb(179, 102, 249, .9)");
+
+    //     //判断是否超过两个人在一个房间
+    //     channel.getMembers().then(async (memberList) => {
+    //         if (memberList.length > 2) {
+    //             client.sendMessageToPeer(
+    //                 {
+    //                     text: JSON.stringify({
+    //                         type: "full",
+    //                     }),
+    //                 },
+    //                 MemberID
+    //             );
+    //             thirdMemberID = MemberID;
+    //             return;
+    //         }
+    //         createOffer(MemberID);
+    //     });
+    // };
+    // let handleUserLeft = (MemberID) => {
+    //     //only update the UI if the member who left was not the third member
+    //     if (MemberID !== thirdMemberID) {
+    //         setUser2Visible(false);
+    //         setUser1SmallFrame(false);
+    //     }
+    //     thirdMemberID = null;
+    // };
 
     let createPeerConnection = async (MemberID) => {
         peerConnection = new RTCPeerConnection(servers); //使用RTCPeerConnection()库。
@@ -232,15 +349,6 @@ function PeerChat(props) {
         }
     };
 
-    let handleUserLeft = (MemberID) => {
-        //only update the UI if the member who left was not the third member
-        if (MemberID !== thirdMemberID) {
-            setUser2Visible(false);
-            setUser1SmallFrame(false);
-        }
-        thirdMemberID = null;
-    };
-
     let leaveChannel = async () => {
         await channel.leave();
         await client.logout();
@@ -277,18 +385,11 @@ function PeerChat(props) {
     let LeftThePage = () => {
         //退出关闭视频和音频
         if (localStreamState) {
-            let videoTrack = localStreamState
-                .getTracks()
-                .find((track) => track.kind === "video");
-            if (videoTrack) {
-                videoTrack.enabled = false;
-            }
-            let audioTrack = localStreamState
-                .getTracks()
-                .find((track) => track.kind === "audio");
-            if (audioTrack.enabled) {
-                audioTrack.enabled = false;
-            }
+            localStreamState.getTracks().forEach((track) => {
+                // 不仅设置 enabled = false，还要调用 track.stop() 来彻底停止设备
+                track.enabled = false;
+                track.stop();
+            });
         }
         //
         navigate("/lobby");
