@@ -2,7 +2,7 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-22 21:15:40
+ * @LastEditTime: 2023-05-23 12:53:19
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -19,9 +19,9 @@ import { useParams } from "@reach/router";
 function PeerChat(props) {
     const [APP_ID] = useState("582c5744b00d4e7dae15d86ca5734353");
     const [token, setToken] = useState(null);
-    const searchParams = new URLSearchParams(window.location.search);
-    const uid = searchParams.get("userId");
-    //const uid = String(Math.floor(Math.random() * 10000));
+    // const searchParams = new URLSearchParams(window.location.search);
+    // const uid = searchParams.get("userId");
+    const uid = String(Math.floor(Math.random() * 10000));
 
     let client;
     let channel;
@@ -54,7 +54,7 @@ function PeerChat(props) {
             width: { min: 640, ideal: 1920, max: 1920 },
             height: { min: 480, ideal: 1080, max: 1080 },
         },
-        audio: true,
+        audio: false,
     };
     const servers = {
         iceServers: [
@@ -73,8 +73,8 @@ function PeerChat(props) {
         channel = client.createChannel(roomId);
         await channel.join();
 
-        // // 加入和离开
-        // channel.on("MemberJoined", handleUserJoined);
+        // 加入和离开
+        channel.on("MemberJoined", handleUserJoined);
         // channel.on("MemberLeft", handleUserLeft);
 
         // // 对应的是，createOffer或者createAnswer函数里面的 client.sendMessageToPeer
@@ -85,10 +85,27 @@ function PeerChat(props) {
         if (videoRef1.current) {
             videoRef1.current.srcObject = localStream;
         }
-
         createOffer();
     };
-
+    //
+    let handleUserJoined = async (MemberID) => {
+        console.log("A new user is joined:", MemberID);
+        // channel.getMembers().then(async (memberList) => {
+        //     if (memberList.length > 2) {
+        //         client.sendMessageToPeer(
+        //             {
+        //                 text: JSON.stringify({
+        //                     type: "full",
+        //                 }),
+        //             },
+        //             MemberID
+        //         );
+        //         thirdMemberID = MemberID;
+        //         return;
+        //     }
+        //     createOffer(MemberID);
+        // });
+    };
     // let handleMessageFromPeer = async (message, MemberID) => {
     //     message = JSON.parse(message.text);
     //     // console.log("Message:", message);
@@ -112,26 +129,6 @@ function PeerChat(props) {
     //             peerConnection.addIceCandidate(message.candidate);
     //         }
     //     }
-    // };
-
-    // //
-    // let handleUserJoined = async (MemberID) => {
-    //     console.log("A new user is joined:", MemberID);
-    //     channel.getMembers().then(async (memberList) => {
-    //         if (memberList.length > 2) {
-    //             client.sendMessageToPeer(
-    //                 {
-    //                     text: JSON.stringify({
-    //                         type: "full",
-    //                     }),
-    //                 },
-    //                 MemberID
-    //             );
-    //             thirdMemberID = MemberID;
-    //             return;
-    //         }
-    //         createOffer(MemberID);
-    //     });
     // };
 
     // let createPeerConnection = async (MemberID) => {
@@ -188,8 +185,25 @@ function PeerChat(props) {
         remoteStream = new MediaStream(); //MediaStream也是库
         document.getElementById("user-2").srcObject = remoteStream; //把远程绑定到user-2窗口。
 
+        localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        // 接受远程的track
+        peerConnection.ontrack = (event) => {
+            event.streams[0].getTracks().forEach((track) => {
+                remoteStream.addTrack(track);
+            });
+        };
+        // 监听远程的track
+        peerConnection.onicecandidate = async (event) => {
+            if (event.candidate) {
+                console.log("New ice candidate:", event.candidate);
+            }
+        };
+
         let offer = await peerConnection.createOffer(); //创建一个offer规则，目前为空。
-        await peerConnection.setLocalDescription(offer); //该方法更改与连接关联的本地描述。此描述指定连接本地端的属性，包括媒体格式。该方法采用单个参数——会话描述——并返回一个 Promise参数，一旦描述被改变，它就会异步地完成。（来自MDN的描述）
+        await peerConnection.setLocalDescription(offer); // 这个会触发上面的onicecandidate。
 
         console.log("offer:", offer);
 
@@ -266,8 +280,8 @@ function PeerChat(props) {
     // 在useEffect中调用init函数
 
     useEffect(() => {
-        // window.addEventListener("beforeunload", leaveChannel);
-        if (!roomId || uid !== props.userId) {
+        //  || uid !== props.userId
+        if (!roomId) {
             navigate("/lobby");
         } else {
             init();
