@@ -2,7 +2,7 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-24 00:28:54
+ * @LastEditTime: 2023-05-24 11:52:06
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -65,9 +65,30 @@ function PeerChat(props) {
         iceServers: [
             {
                 urls: [
+                    "stun:a.relay.metered.ca:80",
                     "stun:stun1.l.google.com:19302",
                     "stun:stun2.l.google.com:19302",
                 ],
+            },
+            {
+                urls: "turn:a.relay.metered.ca:80",
+                username: "8fdd2940a4178658729dc41f",
+                credential: "s39ogJTTyYhT/fwa",
+            },
+            {
+                urls: "turn:a.relay.metered.ca:80?transport=tcp",
+                username: "8fdd2940a4178658729dc41f",
+                credential: "s39ogJTTyYhT/fwa",
+            },
+            {
+                urls: "turn:a.relay.metered.ca:443",
+                username: "8fdd2940a4178658729dc41f",
+                credential: "s39ogJTTyYhT/fwa",
+            },
+            {
+                urls: "turn:a.relay.metered.ca:443?transport=tcp",
+                username: "8fdd2940a4178658729dc41f",
+                credential: "s39ogJTTyYhT/fwa",
             },
         ],
     };
