@@ -2,9 +2,9 @@
  * @Author: mixin weng mixin_weng2022@163.com
  * @Date: 2023-05-21 19:21:29
  * @LastEditors: mixin weng mixin_weng2022@163.com
- * @LastEditTime: 2023-05-24 11:52:06
+ * @LastEditTime: 2023-05-24 22:51:42
  * @FilePath: /catbook-mixin/client/src/components/pages/WebRTC.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @Description: Allow peer to peer to video and audio chat. but audio has some echo need to fix
  */
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
@@ -51,15 +51,14 @@ function PeerChat(props) {
     let videoRef1 = useRef(null);
     let videoRef2 = useRef(null);
 
-    // 然后，我们处理你的函数。我们需要确保函数能够访问到最新的state，
-    // 因此我们将它们放在组件内部。在这个过程中，我们需要注意替换全局变量的引用为对应的state，
-    // 并使用setState函数来改变state的值。
     const constraints = {
         video: {
             width: { min: 640, ideal: 1920, max: 1920 },
             height: { min: 480, ideal: 1080, max: 1080 },
         },
-        audio: true,
+        audio: {
+            echoCancellation: true,
+        },
     };
     const servers = {
         iceServers: [
@@ -175,8 +174,18 @@ function PeerChat(props) {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         localStream = stream;
         setLocalStreamState(stream);
-        if (videoRef1.current) {
-            videoRef1.current.srcObject = stream;
+        // 提取视频流
+        const videoTracks = stream.getVideoTracks();
+        if (videoTracks.length > 0) {
+            const videoTrack = videoTracks[0];
+            // 创建一个只包含视频的新 MediaStream
+            const videoStream = new MediaStream([videoTrack]);
+            // 设置只包含视频的流为 video 元素的源
+            if (videoRef1.current) {
+                videoRef1.current.srcObject = videoStream;
+            }
+        } else {
+            console.log("No video tracks available");
         }
 
         return () => {
@@ -190,6 +199,7 @@ function PeerChat(props) {
     useEffect(() => {
         //  || uid !== props.userId
         if (!roomId || uid !== props.userId) {
+            alert("login first!");
             navigate("/lobby");
         } else {
             init();
@@ -201,98 +211,10 @@ function PeerChat(props) {
         };
     }, [init]);
 
-    //*test*//
-
-    // useEffect(() => {
-    //     //  || uid !== props.userId
-    //     if (!roomId) {
-    //         navigate("/lobby");
-    //     } else {
-    //         init();
-    //     }
-    //     return () => {
-    //         window.removeEventListener("beforeunload", leaveChannel);
-    //         leaveChannel();
-    //     };
-    // }, []); // 只在组件挂载时执行
-
-    // let init = async () => {
-    //     client = await AgoraRTM.createInstance(APP_ID);
-    //     await client.login({ uid, token });
-    //     channel = client.createChannel(roomId);
-    //     await channel.join();
-    //     // 加入和离开
-    //     channel.on("MemberJoined", handleUserJoined);
-    //     channel.on("MemberLeft", handleUserLeft);
-
-    //     client.on("MessageFromPeer", handleMessageFromPeer);
-
-    //     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    //     localStream = stream;
-    //     setLocalStreamState(stream);
-    //     if (videoRef1.current) {
-    //         videoRef1.current.srcObject = stream;
-    //     }
-    // };
-    // const handleMessageFromPeer = async (message, MemberID) => {
-    //     message = JSON.parse(message.text);
-    //     console.log("Message:", message);
-
-    //     if (message.type === "full") {
-    //         alert("Room is full");
-    //         LeftThePage();
-    //     }
-
-    //     if (message.type === "offer") {
-    //         createAnswer(MemberID, message.offer);
-    //     }
-
-    //     if (message.type === "answer") {
-    //         addAnswer(message.answer);
-    //     }
-
-    //     if (message.type === "candidate") {
-    //         if (peerConnection) {
-    //             peerConnection.addIceCandidate(message.candidate);
-    //         }
-    //     }
-    // };
-    // let handleUserJoined = async (MemberID) => {
-    //     console.log("A new user is joined:", MemberID);
-
-    //     setCameraButtonColor("rgb(179, 102, 249, .9)");
-    //     setMicButtonColor("rgb(179, 102, 249, .9)");
-
-    //     //判断是否超过两个人在一个房间
-    //     channel.getMembers().then(async (memberList) => {
-    //         if (memberList.length > 2) {
-    //             client.sendMessageToPeer(
-    //                 {
-    //                     text: JSON.stringify({
-    //                         type: "full",
-    //                     }),
-    //                 },
-    //                 MemberID
-    //             );
-    //             thirdMemberID = MemberID;
-    //             return;
-    //         }
-    //         createOffer(MemberID);
-    //     });
-    // };
-    // let handleUserLeft = (MemberID) => {
-    //     //only update the UI if the member who left was not the third member
-    //     if (MemberID !== thirdMemberID) {
-    //         setUser2Visible(false);
-    //         setUser1SmallFrame(false);
-    //     }
-    //     thirdMemberID = null;
-    // };
-
     let createPeerConnection = async (MemberID) => {
         peerConnection = new RTCPeerConnection(servers); //使用RTCPeerConnection()库。
 
-        remoteStream = new MediaStream(); //MediaStream也是库
+        remoteStream = new MediaStream();
         if (videoRef2.current) {
             videoRef2.current.srcObject = remoteStream;
         }
@@ -300,12 +222,26 @@ function PeerChat(props) {
         setUser2Visible(true);
         setUser1SmallFrame(true);
 
-        // 如果localStream还没有设置，则再次设置。防止为空。
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        localStream = stream;
-        setLocalStreamState(stream);
-        if (videoRef1.current) {
-            videoRef1.current.srcObject = stream;
+        if (!localStream) {
+            // 如果localStream还没有设置，则再次设置。防止为空。
+            const stream = await navigator.mediaDevices.getUserMedia(
+                constraints
+            );
+            localStream = stream;
+            setLocalStreamState(stream);
+            // 提取视频流
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                const videoTrack = videoTracks[0];
+                // 创建一个只包含视频的新 MediaStream
+                const videoStream = new MediaStream([videoTrack]);
+                // 设置只包含视频的流为 video 元素的源
+                if (videoRef1.current) {
+                    videoRef1.current.srcObject = videoStream;
+                }
+            } else {
+                console.log("No video tracks available");
+            }
         }
 
         localStream.getTracks().forEach((track) => {
@@ -314,26 +250,31 @@ function PeerChat(props) {
 
         // 接受远程的track
         peerConnection.ontrack = (event) => {
-            event.streams[0].getTracks().forEach((track) => {
-                remoteStream.addTrack(track);
-            });
+            handleTrackEvent(event);
         };
         // 监听远程的track
         peerConnection.onicecandidate = async (event) => {
             if (event.candidate) {
-                client.sendMessageToPeer(
-                    {
-                        text: JSON.stringify({
-                            type: "candidate",
-                            candidate: event.candidate,
-                        }),
-                    },
-                    MemberID
-                );
+                await sendIceCandidate(event.candidate, MemberID);
             }
         };
     };
-
+    function handleTrackEvent(event) {
+        event.streams[0].getTracks().forEach((track) => {
+            remoteStream.addTrack(track);
+        });
+    }
+    async function sendIceCandidate(candidate, MemberID) {
+        await client.sendMessageToPeer(
+            {
+                text: JSON.stringify({
+                    type: "candidate",
+                    candidate: candidate,
+                }),
+            },
+            MemberID
+        );
+    }
     let createOffer = async (MemberID) => {
         try {
             await createPeerConnection(MemberID);
@@ -366,7 +307,7 @@ function PeerChat(props) {
 
     let addAnswer = async (answer) => {
         if (!peerConnection.currentRemoteDescription) {
-            peerConnection.setRemoteDescription(answer);
+            await peerConnection.setRemoteDescription(answer);
         }
     };
 
