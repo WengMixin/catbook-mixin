@@ -1,14 +1,14 @@
 .SingleUser-container {
-  background: var(--white);
-  border-radius: var(--xs);
-  padding: var(--m) var(--l);
-  margin-bottom: var(--s);
+    background: var(--left);
+    border-radius: var(--xs);
+    padding: var(--m) var(--l);
+    margin: 0 var(--s) var(--s) var(--s);
 }
 
 .SingleUser-container:hover {
-  background: var(--medgrey);
+    background: var(--right);
 }
 
 .SingleUser-container--active {
-  background: var(--grey);
+    background: var(--hightline);
 }

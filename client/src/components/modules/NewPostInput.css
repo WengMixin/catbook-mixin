@@ -1,31 +1,33 @@
 .NewPostInput-input,
 .NewPostInput-button {
-  font-family: "Open Sans";
-  font-size: 14px;
-  padding: var(--s) var(--m);
+    font-family: "Open Sans";
+    font-size: 14px;
+    padding: var(--s) var(--s);
 }
 
 .NewPostInput-input {
-  flex-grow: 1;
-  border: var(--darkgrey) 1px solid;
-  border-radius: var(--xs) 0 0 var(--xs);
-  transition: box-shadow 0.1s;
+    flex-grow: 1;
+    border: var(--right) 1px solid;
+    border-radius: var(--xs) 0 0 var(--xs);
+    transition: box-shadow 0.1s;
+    background-color: var(--input);
+    color: var(--white);
 }
 
-.NewPostInput-input:focus-within {
-  border-color: var(--primary--dim);
-  box-shadow: 0 0 0 var(--xs) rgba(0, 123, 255, 0.25);
-}
+/* .NewPostInput-input:focus-within {
+    border-color: var(--right);
+    box-shadow: 0 0 var(--xs) 0 rgba(14, 118, 221, 0);
+} */
 
 .NewPostInput-button {
-  color: var(--primary);
-  border: var(--primary) 1px solid;
-  border-radius: 0 var(--xs) var(--xs) 0;
-  background: none;
-  transition: color 0.1s, background 0.1s;
+    color: var(--white);
+    border: var(--right) 1px solid;
+    border-radius: 0 var(--xs) var(--xs) 0;
+    background: var(--submit);
+    transition: color 0.1s, background 0.1s;
 }
 
 .NewPostInput-button:hover {
-  color: var(--white);
-  background-color: var(--primary);
+    color: var(--white);
+    background-color: var(--purple);
 }

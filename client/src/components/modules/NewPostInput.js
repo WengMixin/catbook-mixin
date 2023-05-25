@@ -12,39 +12,39 @@ import { post } from "../../utilities";
  * @param {({storyId, value}) => void} onSubmit: (function) triggered when this post is submitted, takes {storyId, value} as parameters
  */
 const NewPostInput = (props) => {
-  const [value, setValue] = useState("");
+    const [value, setValue] = useState("");
 
-  // called whenever the user types in the new post input box
-  const handleChange = (event) => {
-    setValue(event.target.value);
-  };
+    // called whenever the user types in the new post input box
+    const handleChange = (event) => {
+        setValue(event.target.value);
+    };
 
-  // called when the user hits "Submit" for a new post
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    props.onSubmit && props.onSubmit(value);
-    setValue("");
-  };
+    // called when the user hits "Submit" for a new post
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        props.onSubmit && props.onSubmit(value);
+        setValue("");
+    };
 
-  return (
-    <div className="u-flex">
-      <input
-        type="text"
-        placeholder={props.defaultText}
-        value={value}
-        onChange={handleChange}
-        className="NewPostInput-input"
-      />
-      <button
-        type="submit"
-        className="NewPostInput-button u-pointer"
-        value="Submit"
-        onClick={handleSubmit}
-      >
-        Submit
-      </button>
-    </div>
-  );
+    return (
+        <div className="u-flex">
+            <input
+                type="text"
+                placeholder={props.defaultText}
+                value={value}
+                onChange={handleChange}
+                className="NewPostInput-input"
+            />
+            <button
+                type="submit"
+                className="NewPostInput-button u-pointer"
+                value="Submit"
+                onClick={handleSubmit}
+            >
+                Submit
+            </button>
+        </div>
+    );
 };
 
 /**
@@ -55,15 +55,15 @@ const NewPostInput = (props) => {
  * @param {string} storyId to add comment to
  */
 const NewComment = (props) => {
-  const addComment = (value) => {
-    const body = { parent: props.storyId, content: value };
-    post("/api/comment", body).then((comment) => {
-      // display this comment on the screen
-      props.addNewComment(comment);
-    });
-  };
+    const addComment = (value) => {
+        const body = { parent: props.storyId, content: value };
+        post("/api/comment", body).then((comment) => {
+            // display this comment on the screen
+            props.addNewComment(comment);
+        });
+    };
 
-  return <NewPostInput defaultText="New Comment" onSubmit={addComment} />;
+    return <NewPostInput defaultText="New Comment" onSubmit={addComment} />;
 };
 
 /**
@@ -73,15 +73,15 @@ const NewComment = (props) => {
  * @param {string} defaultText is the placeholder text
  */
 const NewStory = (props) => {
-  const addStory = (value) => {
-    const body = { content: value };
-    post("/api/story", body).then((story) => {
-      // display this story on the screen
-      props.addNewStory(story);
-    });
-  };
+    const addStory = (value) => {
+        const body = { content: value };
+        post("/api/story", body).then((story) => {
+            // display this story on the screen
+            props.addNewStory(story);
+        });
+    };
 
-  return <NewPostInput defaultText="New Story" onSubmit={addStory} />;
+    return <NewPostInput defaultText="New Story" onSubmit={addStory} />;
 };
 
 /**
@@ -91,12 +91,12 @@ const NewStory = (props) => {
  * @param {UserObject} recipient is the intended recipient
  */
 const NewMessage = (props) => {
-  const sendMessage = (value) => {
-    const body = { recipient: props.recipient, content: value };
-    post("/api/message", body);
-  };
+    const sendMessage = (value) => {
+        const body = { recipient: props.recipient, content: value };
+        post("/api/message", body);
+    };
 
-  return <NewPostInput defaultText="New Message" onSubmit={sendMessage} />;
-}
+    return <NewPostInput defaultText="New Message" onSubmit={sendMessage} />;
+};
 
 export { NewComment, NewStory, NewMessage };

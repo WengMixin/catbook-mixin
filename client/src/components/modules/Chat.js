@@ -1,3 +1,11 @@
+/*
+ * @Author: mixin weng mixin_weng2022@163.com
+ * @Date: 2023-05-09 20:05:45
+ * @LastEditors: mixin weng mixin_weng2022@163.com
+ * @LastEditTime: 2023-05-25 03:40:14
+ * @FilePath: /catbook-mixin/client/src/components/modules/Chat.js
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 import React, { useState, useEffect } from "react";
 import SingleMessage from "./SingleMessage.js";
 import { NewMessage } from "./NewPostInput.js";
@@ -28,19 +36,21 @@ import "./Chat.css";
  * @param {ChatData} data
  */
 const Chat = (props) => {
-  return (
-    <div className="u-flexColumn Chat-container">
-      <h3>Chatting with {props.data.recipient.name}</h3>
-      <div className="Chat-historyContainer">
-        {props.data.messages.map((m, i) => (
-          <SingleMessage message={m} key={i} />
-        ))}
-      </div>
-      <div className="Chat-newContainer">
-        <NewMessage recipient={props.data.recipient} />
-      </div>
-    </div>
-  );
-}
+    return (
+        <div className="u-flexColumn Chat-container">
+            <h3 style={{ padding: "0 0 0 24px" }}>
+                Chatting with {props.data.recipient.name}
+            </h3>
+            <div className="Chat-historyContainer">
+                {props.data.messages.map((m, i) => (
+                    <SingleMessage message={m} key={i} />
+                ))}
+            </div>
+            <div className="Chat-newContainer">
+                <NewMessage recipient={props.data.recipient} />
+            </div>
+        </div>
+    );
+};
 
 export default Chat;
