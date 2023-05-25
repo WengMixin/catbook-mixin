@@ -14,10 +14,10 @@
     color: var(--white);
 }
 
-/* .NewPostInput-input:focus-within {
-    border-color: var(--right);
-    box-shadow: 0 0 var(--xs) 0 rgba(14, 118, 221, 0);
-} */
+.NewPostInput-input:focus-within {
+    border-color: var(--white);
+    box-shadow: 0 0 0 var (--xs) rgba(14, 118, 221, 0);
+}
 
 .NewPostInput-button {
     color: var(--white);
